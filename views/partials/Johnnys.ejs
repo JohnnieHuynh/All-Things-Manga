@@ -1,0 +1,63 @@
+$(document).ready(function() {
+    //Call Add States Func
+    //addStates();
+
+    //Get when ZIPCODE entered
+    window.updateZip = function() {
+      //Get User Inputted Zip Code
+      var zipURL = "https://cst336.herokuapp.com/projects/api/cityInfoAPI.php?zip=";
+      var userZip = $("#zipBox").val();
+      var newURL = zipURL.concat(userZip);
+
+      //Fetch Data
+      $.getJSON(newURL, function(data){
+
+      //Assign data to var
+      let zipCity = data.city;
+
+      //Display City
+      document.getElementById("city").innerHTML = zipCity;
+
+      //If no zip found
+      if (data.zip==null) {
+        document.getElementById("zipFeedback").innerHTML = "ZIP Not Found";
+        
+        //Display Empty City 
+        document.getElementById("city").innerHTML = "";
+      }
+
+     })
+    }
+
+    function addStates() {
+      var stateURL = "https://cst336.herokuapp.com/projects/api/state_abbrAPI.php";
+
+      $.getJSON(stateURL, function(data) {
+      //Get size of json array
+      var len = data.length;
+
+      //Get Reference
+      var selState = document.getElementById("stateBox");
+
+      //Fill Options
+      for (var b = 0; b < len; b++) {
+        //Create Option
+        var opt = document.createElement('option');
+        var currentState = data[b].state;
+
+        opt.appendChild(document.createTextNode(currentState));
+
+        //Set Value for each
+        opt.value = currentState;
+
+        //Add to Select
+        selState.appendChild(opt);
+
+      } 
+
+      })
+  
+  
+  }
+
+  }

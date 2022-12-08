@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+
+  <!-- MY CSS -->
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+
+  <!-- CSS BOOT -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+
+  <!-- jQuery and JS bundle w/ Popper.js -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+</head>
+<body>
+  <h1 class="jumbotron"> All Things Manga </h1>
+    <div class="placeholder">
+    
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="collapse navbar-collapse justify-content-center" id="navbarSupportedContent">
+         <ul class="navbar-nav">
+            <li class="nav-item active ">
+              <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" onclick="redirectMenu()">Account</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="cart">Cart</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="account">Login</a>
+            </li>
+          </ul>
+          <form class="form-inline my-2 my-lg-0" action="/search">
+            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="search">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit" >Search</button>
+          </form>
+        </div>
+      </nav>
+      <div class="card">
+        <div class="card-body bg-light">
+          <!-- Display mangas -->
+          <% if(rows.length > 0){ %>
+            <div class="col-lg-12 col-sm-12 hero-feature">
+            <div class="table-responsive">
+                <table class="table table-bordered tbl-cart">
+                    <thead>
+                        <tr>
+                            <td class="hidden-xs">Image</td>
+                            <td>Manga</td>
+                            <td class="td-qty">Quantity</td>
+                            <td>Unit Price</td>
+                            <td>Sub Total</td>
+                            <td>Remove</td>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        
+                    </tbody>
+                </table>
+            </div>
+            <div class="btn-group btns-cart">
+                <button type="button" class="btn btn-primary btnUpdate">Update Cart</button>
+                <button type="button" class="btn btn-secondary btnCheckout">Checkout <i class="fa fa-arrow-circle-right"></i></button>
+            </div>
+
+          </div>
+          <% } else{ %>
+            Cart is empty!
+          <% } %>
+
+        </div>  
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script>
+    let mangas = <%-JSON.stringify(mangas)%>;
+    let cartID = <%-JSON.stringify(cartID)%>;
+    console.log(cartID);
+    loadCartItems();
+    getTotal();
+
+    let sentAdminStatus = <%-JSON.stringify(isAdmin)%>;
+
+      function redirectMenu() {
+        //TEMP Redirect 
+        //location.href = "./normalUserMenu";
+        
+        //Check If current user is normal user
+
+        if (sentAdminStatus == -1) {
+          //Alert to Sign In First
+          alert("You must sign in first!"); 
+          return;
+        }else if (sentAdminStatus) {
+          location.href = "./adminAccountMenu";
+        }else{
+          location.href = "./normalUserMenu";
+        }
+        
+      }
+
+    $(".btn_minus").on("click", function(){
+        let textField = $(this).parent().siblings("input")[0];
+        let total = $(this).parent().parent().parent().siblings("td.total")[0];
+        let unitPrice = $(this).parent().parent().parent().siblings("td.price")[0];
+        if (Number(textField.value) <= 1){
+          textField.value = 1;
+        }
+        else{
+          textField.value = Number(textField.value) - 1;
+        }
+        let totalInt = Number(total.id);
+        let unitPriceInt = Number(unitPrice.id); 
+        let output = Number(textField.value) * unitPriceInt;
+        total.innerHTML = "$" + output;
+        total.id = output;
+        let t = getTotal();
+        $(".grandTotal").html(`$${t}`);
+    });
+
+    $(".btn_plus").on("click", function(){
+      let textField = $(this).parent().siblings("input")[0];
+      let total = $(this).parent().parent().parent().siblings("td.total")[0];
+      let unitPrice = $(this).parent().parent().parent().siblings("td.price")[0];
+      textField.value = Number(textField.value) + 1;
+      let totalInt = Number(total.id);
+      let unitPriceInt = Number(unitPrice.id); 
+      let output = Number(textField.value) * unitPriceInt;
+      total.innerHTML = "$" + output;
+      total.id = output;
+      let t = getTotal();
+      $(".grandTotal").html(`$${t}`);
+    }); 
+
+    $(".btnUpdate").on("click", function(){
+      let allCartItemID = $("#tableBody tr[id]");
+      let allQuantities = $("#tableBody .quantity");
+      let sql = {"query": "UPDATE cart_item SET qty = ? WHERE cartItemID = ?"};
+      let action = {"action": "UPDATE"};
+      let arr = [];
+      arr.push(action);
+      arr.push(sql);
+      for (let i=0; i<allCartItemID.length; i++){
+        let id = allCartItemID[i].id;
+        let qty = allQuantities[i].value;
+        arr.push({"cartItemID":id, "qty": qty});
+      }
+      //console.log(arr);
+      
+      $.ajax({  
+        type: "POST",
+        url: "/cart",
+        data: JSON.stringify(arr),
+        contentType: "application/json; charset=utf-8",
+        complete: function() {
+        //called when complete
+          console.log('process complete');
+          console.log(JSON.stringify(arr));
+        },
+        failure: function (msg) {
+            alert(msg.d);
+        }
+      });
+      //console.log(allCartItemID);
+      window.location.href = "/cart";
+    });
+
+    $(".removeIcon").on("click", function(){
+      let deleteManga = confirm("Delete item?");
+      if (deleteManga){
+        let id = $(this).parent().parent()[0].id;
+        let action = {"action": "DELETE"};
+        let sql = {"query": `DELETE FROM cart_item WHERE cartItemID = ?`};
+        let arr = [];
+        arr.push(action);
+        arr.push(sql);
+        arr.push({"cartItemID":id});
+        $.ajax({  
+          type: "POST",
+          url: "/cart",
+          data: JSON.stringify(arr),
+          contentType: "application/json; charset=utf-8",
+          complete: function() {
+          //called when complete
+            console.log('process complete');
+            console.log(JSON.stringify(arr));
+          },
+          failure: function (msg) {
+              alert(msg.d);
+          }
+        });
+        window.location.href = "/cart";
+      }
+    });
+
+    $(".btnCheckout").on("click", function(){
+        let action = {"action": "CHECKOUT"};
+        let sql = {"query": `UPDATE cart SET purchased = ?, total = ? WHERE cartID = ?`};
+        let arr = [];
+        let total = getTotal();
+        arr.push(action);
+        arr.push(sql);
+        arr.push({"purchased": 1, "cartID": cartID, "total": total});
+        $.ajax({  
+          type: "POST",
+          url: "/cart",
+          data: JSON.stringify(arr),
+          contentType: "application/json; charset=utf-8",
+          complete: function() {
+          //called when complete
+            console.log('process complete');
+            console.log(JSON.stringify(arr));
+          },
+          failure: function (msg) {
+              alert(msg.d);
+          }
+        });
+        window.location.href = "/cart";
+    });
+
+    function loadCartItems(){
+        //do your work here
+        //www.bootdey.com/snippets/view/shopping-cart-table#html
+        let cartItems = <%-JSON.stringify(rows)%>;
+        if (cartItems.length != 0){
+              //console.log(cartItems);
+          cartItems.forEach(function(i){
+            let manga = getMangaByID(i.mangaID);
+            let total = manga.price * i.qty;
+            $("#tableBody").append(`
+              <tr id=${i.cartItemID}>
+                  <td>
+                    <img src=${manga.image} alt="img" width="47" height="47">
+                  </td>
+                  <td>
+                    ${manga.title}
+                  </td>
+                  <td>
+                    <div class="input-group bootstrap-touchspin">
+                      <span class="input-group-btn">
+                        <button class="btn btn-default bootstrap-touchspin-down btn_minus" type="button">-</button></span><span class="input-group-addon bootstrap-touchspin-prefix" style="display: none;">
+                      </span>
+                        <input type="text" name="" value="${i.qty}" class="quantity input-qty form-control text-center" style="display: block;">
+                        <span class="input-group-addon bootstrap-touchspin-postfix" style="display: none;"></span>
+                        <span class="input-group-btn">
+                          <button class="btn btn-default bootstrap-touchspin-up btn_plus" type="button">+</button>
+                        </span>
+                    </div>
+                  </td>
+                  <td class="price" id=${manga.price}>
+                  $${manga.price}
+                  </td>
+                  <td class="total" id=${total}>
+                    $${total}
+                  </td>
+                  <td>
+                    <input type="image" src="images/trash.jpg" alt="trash icon" width="20px" height="20px" class="removeIcon">
+                  </td>
+              </tr>
+          `);
+        });
+        $("#tableBody").append(`
+            <tr>
+              <td colspan="5" align="right">Total</td>
+              <td class="grandTotal" colspan="2"><b></b></td>
+            </tr>
+        `);
+        }
+        
+    };
+    function getTotal(){
+      let td = $("tr").find("td.total");
+      let total = 0;
+      for (let i=0; i<td.length; i++){
+        total += Number(td[i].id);
+      }
+      return total;
+    }
+
+    function getMangaByID(id){
+        for (let i=0; i<mangas.length; i++){
+          if (mangas[i].mangaID == id)
+          {
+            return mangas[i];
+          }
+        }
+        return [];
+    }
+  </script>
+</body>
+</html>

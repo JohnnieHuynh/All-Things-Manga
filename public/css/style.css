@@ -1,0 +1,28 @@
+h1 {
+  text-align: center;
+}
+
+.placeholder {
+  text-align: center;
+}
+
+.cardLog {
+        margin: 0 auto;
+        float: none; 
+        margin-bottom: 10px; 
+        width: 20rem;
+}
+
+.ErrC {
+  text-align: center;
+}
+
+.p {
+  background-color: skyblue
+}
+
+
+#cls {
+  background-color:white
+}
+
