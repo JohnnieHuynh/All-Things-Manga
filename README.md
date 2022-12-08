@@ -17,10 +17,10 @@ The projects fundamentals are complete and this project won't be worked on anymo
 
 ## Authors
 
-Johnny Huynh
-Jake Marrow
-Onyinye Aladiume
-Syn Kae Ng
+Johnny Huynh. 
+Jake Marrow. 
+Onyinye Aladiume. 
+Syn Kae Ng. 
 
 ## License
 
